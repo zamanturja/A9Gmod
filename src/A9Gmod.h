@@ -12,7 +12,7 @@
  *        2) The A9Gmod class that acts like a high-level MQTT client (similar to PubSubClient).
  * @author
  * Written by @MD. Touhiduzzaman Turja [AKA - Zaman Turja]
- * V0.1.25.3.2
+ * V0.1.25.3.3
  */
 
 /* ------------------------------------------------------------------
@@ -323,7 +323,7 @@ public:
      *         GPRS & APN HANDLING
      * ---------------------------------------------------- */
   bool isGPRSAttached();
-  bool attachGPRS();
+  bool attachGPRS(const char* apn, const char* user = nullptr, const char* pwd = nullptr);
   bool detachGPRS();
   bool setAPN(const char *pdpType, const char *apn);
   bool activatePDP();

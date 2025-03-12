@@ -15,17 +15,28 @@
 #include <Arduino.h>
 #include "A9Gmod.h"  // Include your library's main header
 
-// For boards with multiple hardware serials, you might use Serial1.
 // If your board has only one hardware serial, consider using SoftwareSerial (not recommended for high baud).
-// Example: SoftwareSerial modemSerial(2,3); // RX, TX
-// But for demonstration, let's assume we have Serial1 for the A9G module.
-#define MODEM_SERIAL Serial1
+// But for demonstration, let's assume we have [HardwareSerial 2 of the ESP32] for the A9G module.
+
+const char* gprsApn = "internet";
+const char* gprsUser = "";
+const char* gprsPass = "";
+
+const char* mqtt_broker = "PUT_YOUR_BROKER_LINK_HERE";
+const char* topic_publish = "topic/publish";
+const char* topic_subscribe = "topic/subscribe";
+
+const int RX_PIN = 16;
+const int TX_PIN = 17;
+const uint32_t TARGET_GSM_BAUD = 115200;
+
+HardwareSerial modemSerial(2);
 
 A9G a9g(true);       // Enable debug logs
 A9Gmod a9gmod(a9g);  // High-level MQTT wrapper
 
 // Callback for incoming MQTT messages
-void onMQTTMessage(const char *topic, const char *payload) {
+void onMQTTMessage(const char* topic, const char* payload) {
   Serial.print("MQTT Message arrived:\n  Topic: ");
   Serial.println(topic);
   Serial.print("  Payload: ");
@@ -38,26 +49,26 @@ void setup() {
   delay(1000);
 
   // Start modem serial
-  MODEM_SERIAL.begin(115200);
+  modemSerial.begin(TARGET_GSM_BAUD, SERIAL_8N1, RX_PIN, TX_PIN);
   delay(3000);
 
   Serial.println("Initializing A9G module...");
 
   // Initialize the A9G
-  bool inited = a9g.init(&MODEM_SERIAL);
+  bool inited = a9g.init(&modemSerial);
   if (!inited) {
     Serial.println("Failed to initialize A9G module!");
     while (true) { delay(1000); }
   }
 
   // Optional: Wait until the modem is ready (it prints "READY")
-  // a9g.waitForModemReady();
+  a9g.waitForModemReady();
 
   // Check signal quality
   a9g.readSignalQuality();
 
   // Attach GPRS (for MQTT)
-  if (!a9g.attachGPRS()) {
+  if (!a9g.attachGPRS(gprsApn, gprsUser, gprsPass)) {
     Serial.println("Failed to attach GPRS!");
   } else {
     // Set APN (if your SIM's APN is something else, change accordingly)
@@ -67,7 +78,7 @@ void setup() {
   }
 
   // Configure the MQTT server
-  a9gmod.setMQTTServer("test.mosquitto.org", 1883);
+  a9gmod.setMQTTServer(mqtt_broker, 1883);
   a9gmod.onMQTTMessage(onMQTTMessage);
 
   // Connect to MQTT
@@ -76,9 +87,9 @@ void setup() {
   if (connected) {
     Serial.println("MQTT connected!");
     // Subscribe to a test topic
-    a9gmod.subscribeMQTT("A9Gmod/test");
+    a9gmod.subscribeMQTT(topic_subscribe);
     // Publish something
-    a9gmod.publishMQTT("A9Gmod/test", "Hello from A9G!");
+    a9gmod.publishMQTT(topic_publish, "Hello from A9G!");
   } else {
     Serial.println("Failed to connect to MQTT broker!");
   }

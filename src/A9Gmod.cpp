@@ -1,5 +1,9 @@
 #include "A9Gmod.h"
 
+#ifndef GF
+#define GF(x) (reinterpret_cast<const __FlashStringHelper *>(PSTR(x)))
+#endif
+
 /* ------------------------------------------------------------------
  *                   A9G IMPLEMENTATION
  * ------------------------------------------------------------------ */
@@ -124,9 +128,23 @@ bool A9G::isGPRSAttached() {
   return _waitForOkResponse(2000);
 }
 
-bool A9G::attachGPRS() {
+bool A9G::attachGPRS(const char* apn, const char* user, const char* pwd) {
   if (!_modemStream) return false;
   _modemStream->println("AT+CGATT=1");
+  _modemStream->print("+CGDCONT=1,\"IP\",\"");
+  _modemStream->print(apn);
+  _modemStream->println("\"");
+  if (!user) user = "";
+  if (!pwd)  pwd  = "";
+  _modemStream->print("+CSTT=\"");
+  _modemStream->print(apn);
+  _modemStream->print("\",\"");
+  _modemStream->print(user);
+  _modemStream->print("\",\"");
+  _modemStream->print(pwd);
+  _modemStream->println("\"");
+  _modemStream->println("+CGACT=1,1");
+  _modemStream->println("+CIPMUX=1");
   return _waitForOkResponse(2000);
 }
 
