@@ -85,7 +85,11 @@ void setup() {
 
   // Connect to MQTT
   Serial.println("Connecting to MQTT...");
-  bool connected = a9gmod.connectMQTT("A9G_TestClient");
+  bool connected = false;
+  while (!connected) {
+    connected = a9gmod.connectMQTT("A9G_TestClient");
+    delay(2000);
+  }
   if (connected) {
     Serial.println("MQTT connected!");
     // Subscribe to a test topic
