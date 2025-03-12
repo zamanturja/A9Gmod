@@ -18,6 +18,8 @@
 // If your board has only one hardware serial, consider using SoftwareSerial (not recommended for high baud).
 // But for demonstration, let's assume we have [HardwareSerial 2 of the ESP32] for the A9G module.
 
+//? Do not forget to reboot the A9G if any issue occurs :D
+
 const char* gprsApn = "internet";
 const char* gprsUser = "";
 const char* gprsPass = "";

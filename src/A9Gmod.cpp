@@ -71,10 +71,31 @@ void A9G::readIMEI() {
 /**
  * @brief AT+CSQ to read signal quality
  */
-void A9G::readSignalQuality() {
+ void A9G::readSignalQuality() {
   if (!_modemStream) return;
   _modemStream->println("AT+CSQ");
-  _waitForOkResponse(1000);
+  unsigned long start = millis();
+  String result;
+  while (millis() - start < 1000) {
+    while (_modemStream->available()) {
+      result += (char)_modemStream->read();
+    }
+  }
+  int csqValue = -1;
+  int index = result.indexOf("+CSQ: ");
+  if (index != -1) {
+    int commaIndex = result.indexOf(',', index);
+    if (commaIndex != -1) {
+      csqValue = result.substring(index + 6, commaIndex).toInt();
+    }
+  }
+  if (csqValue >= 0 && csqValue <= 31) {
+    int signalDbm = (2 * csqValue) - 113;
+    Serial.println("[A9G] SIGNAL: " + String(signalDbm) + " dBm");
+  } else {
+    Serial.println("[A9G] SIGNAL:  NULL");
+  }
+  while (_modemStream->available()){}
 }
 
 /**
@@ -89,13 +110,11 @@ void A9G::readCCID() {
 /**
  * @brief Wait for the "READY" message (blocking).
  */
-bool A9G::waitForModemReady() {
+ bool A9G::waitForModemReady() {
   if (!_modemStream) return false;
-
   char buffer[100];
   int idx = 0;
   memset(buffer, 0, sizeof(buffer));
-
   _modemStream->println("AT");
   while (true) {
     if (_modemStream->available()) {
@@ -105,17 +124,18 @@ bool A9G::waitForModemReady() {
         idx = 0;
       }
       buffer[idx] = '\0';
-
       if (strstr(buffer, "READY") != nullptr) {
+        Serial.println("[A9G] READY");
         return true;
       }
       if (strstr(buffer, "NO SIM CARD") != nullptr) {
         if (_debugMode) {
-          Serial.println("No SIM card detected!");
+          Serial.println("[A9G] NO SIM CARD");
         }
       }
     }
   }
+  while (_modemStream->available()){}
   return false;
 }
 
