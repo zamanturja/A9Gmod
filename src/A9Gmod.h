@@ -12,7 +12,7 @@
  *        2) The A9Gmod class that acts like a high-level MQTT client (similar to PubSubClient).
  * @author
  * Written by @MD. Touhiduzzaman Turja [AKA - Zaman Turja]
- * V0.1.25.3.1
+ * V0.1.25.3.2
  */
 
 /* ------------------------------------------------------------------
