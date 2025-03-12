@@ -1,0 +1,16 @@
+# Syntax: keyword [TAB/space] category
+# Categories: KEYWORD1, KEYWORD2, KEYWORD3, LITERAL1, LITERAL2, ...
+# Reference: https://docs.arduino.cc/project-create/faq#keywords_txt
+
+A9G	KEYWORD1
+A9Gmod	KEYWORD1
+init	KEYWORD2
+pollModem	KEYWORD2
+readIMEI	KEYWORD2
+readSignalQuality	KEYWORD2
+setAPN	KEYWORD2
+enableGPS	KEYWORD2
+connectMQTT	KEYWORD2
+publishMQTT	KEYWORD2
+subscribeMQTT	KEYWORD2
+disconnectMQTT	KEYWORD2
