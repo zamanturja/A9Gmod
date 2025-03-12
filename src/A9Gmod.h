@@ -12,7 +12,7 @@
  *        2) The A9Gmod class that acts like a high-level MQTT client (similar to PubSubClient).
  * @author
  * Written by @MD. Touhiduzzaman Turja [AKA - Zaman Turja]
- * V0.1.25.3.0
+ * V0.1.25.3.1
  */
 
 /* ------------------------------------------------------------------
@@ -280,6 +280,11 @@ public:
      *        Call frequently inside your main loop().
      */
   void pollModem();
+
+  /**
+      * @brief Allows external access to the modem stream i.e- [available(), read(), print(), println()]
+      */
+  Stream* getModemStream() { return _modemStream; }
 
   /**
      * @brief Simple method for sending a custom AT command for debugging

@@ -528,11 +528,81 @@ uint8_t A9G::_identifyTermString(const char *termStr) {
 /**
  * @brief Given the event +TERM and the data portion, fill in the A9G_Event structure
  */
-void A9G::_handlePotentialEvent(A9G_Event *evt, const char *data, int len) {
-  // Example: if it's EVENT_MQTTPUBLISH, parse topic/message, etc.
+ void A9G::_handlePotentialEvent(A9G_Event *evt, const char *data, int len) {
   if (evt->id == EV_MQTTPUBLISH) {
-    // parse the data
-    // ...
+    
+    // We use pointers into the data buffer (which may not be null-terminated, so we work only within len)
+    const char *p = data;
+    
+    // Skip any leading comma
+    if (len > 0 && *p == ',') {
+      p++;
+    }
+    
+    // Calculate offset from the beginning of data to maintain length safety
+    int offset = p - data;
+    int remaining = len - offset;
+    
+    // Find the first comma (which ends token1: topic)
+    const char *firstComma = NULL;
+    for (int i = 0; i < remaining; i++) {
+      if (p[i] == ',') {
+        firstComma = p + i;
+        break;
+      }
+    }
+    if (firstComma) {
+      int topicLen = firstComma - p;
+      if (topicLen > (int)sizeof(evt->topic) - 1)
+        topicLen = sizeof(evt->topic) - 1;
+      strncpy(evt->topic, p, topicLen);
+      evt->topic[topicLen] = '\0';
+      
+      // Now, move past the first comma
+      p = firstComma + 1;
+      offset = p - data;
+      remaining = len - offset;
+      
+      // Find the next comma (which ends token2, the numeric field)
+      const char *secondComma = NULL;
+      for (int i = 0; i < remaining; i++) {
+        if (p[i] == ',') {
+          secondComma = p + i;
+          break;
+        }
+      }
+      if (secondComma) {
+        // Skip token2 by moving past this comma:
+        p = secondComma + 1;
+        offset = p - data;
+        remaining = len - offset;
+        
+        // Look for the next comma; if found, payload starts after it.
+        const char *thirdComma = NULL;
+        for (int i = 0; i < remaining; i++) {
+          if (p[i] == ',') {
+            thirdComma = p + i;
+            break;
+          }
+        }
+        if (thirdComma) {
+          p = thirdComma + 1;
+          // Now, remaining length for payload:
+          int payloadLen = len - (p - data);
+          if (payloadLen > (int)sizeof(evt->message) - 1)
+            payloadLen = sizeof(evt->message) - 1;
+          strncpy(evt->message, p, payloadLen);
+          evt->message[payloadLen] = '\0';
+        } else {
+          // If no third comma is found, assume the rest is payload.
+          int payloadLen = remaining;
+          if (payloadLen > (int)sizeof(evt->message) - 1)
+            payloadLen = sizeof(evt->message) - 1;
+          strncpy(evt->message, p, payloadLen);
+          evt->message[payloadLen] = '\0';
+        }
+      }
+    }
   } else if (evt->id == EV_CME) {
     // parse numeric code
     evt->error = atoi(data);
@@ -553,6 +623,7 @@ void A9G::_handlePotentialEvent(A9G_Event *evt, const char *data, int len) {
   }
   // etc. for other event types
 }
+
 
 /**
  * @brief After filling the A9G_Event, call the user callback if set.
